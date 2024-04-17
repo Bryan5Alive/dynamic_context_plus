@@ -8,7 +8,7 @@ It's based on the excellent [dynamic_context](https://github.com/elPatrixF/dynam
 ### Usage option 1
 Set the "auto_append" in config to "true" and it will automatically inject a dynamic sentence into the context.
 
-Just modify **settings.yaml** with the config `dynamic_context-auto_append: true`.
+Just modify **settings.yaml** with the config `dynamic_context_plus-auto_append: true`.
 
 You won't have to add anything to the character files if you use this option.
 
