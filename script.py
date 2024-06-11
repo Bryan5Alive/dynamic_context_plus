@@ -13,8 +13,9 @@ params = {
 
 
 def state_modifier(state):
-    month = datetime.now().month
-    day = datetime.now().day
+    now = datetime.now()
+    month = now.month
+    day = now.day
 
     if (month > 3 and month < 6) or (month == 3 and day >= 20) or (month == 6 and day < 21):
         season = 'spring'
@@ -25,7 +26,7 @@ def state_modifier(state):
     else:
         season = 'winter'
 
-    hour = datetime.now().hour
+    hour = now.hour
     if 5 <= hour < 12:
         time_of_day = 'morning'
     elif 12 <= hour < 17:
@@ -35,23 +36,28 @@ def state_modifier(state):
     else:
         time_of_day = 'night'
 
-    weekday = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')[datetime.now().weekday()]
+    weekday = now.strftime('%A')
+
+    replacements = {
+        'location': params['location'],
+        'temperature': params['temperature'],
+        'weather': params['weather'],
+        'time': now.strftime('%I:%M %p'),
+        'time_of_day': time_of_day,
+        'date': now.strftime('%B %d, %Y'),
+        'season': season,
+        'weekday': weekday
+    }
 
     if not params['auto_append']:
-        state['context'] = state['context'].replace('{{location}}', params['location'])
-        state['context'] = state['context'].replace('{{temperature}}', params['temperature'])
-        state['context'] = state['context'].replace('{{weather}}', params['weather'])
-        state['context'] = state['context'].replace('{{time}}', datetime.now().strftime('%I:%M %p'))
-        state['context'] = state['context'].replace('{{time_of_day}}', time_of_day)
-        state['context'] = state['context'].replace('{{date}}', datetime.now().strftime('%B %d, %Y'))
-        state['context'] = state['context'].replace('{{season}}', season)
-        state['context'] = state['context'].replace('{{weekday}}', weekday)
+        state['context'] = state['context'].format_map(replacements)
     else:
         auto_context = get_auto_context(season, time_of_day, weekday)
-        if ('context' in state) and state['context']:
-            state['context'] += '\n\n' + auto_context + '\n'
+
+        if 'context' in state and state['context']:
+            state['context'] += f'\n\n{auto_context}\n'
         else:
-            state['context'] = auto_context + '\n'
+            state['context'] = f'{auto_context}\n'
 
     return state
 
@@ -59,23 +65,25 @@ def state_modifier(state):
 def get_auto_context(season, time_of_day, weekday):
     base_template = f'This conversation takes place on a {weekday} {time_of_day}'
 
-    if ('location' in params) and params['location']:
-        base_template += f', in {params["location"]}'
+    attributes_str = {
+        'location': f', in {params["location"]}',
+        'season': f', during the {season} season',
+        'temperature_weather': f', with a {params["temperature"]} temperature and {params["weather"]} weather'
+    }
 
-    if season:
-        base_template += f', during the {season} season'
-
-    if (('temperature' in params) and params['temperature']) and (('weather' in params) and params['weather']):
-        base_template += f', with a {params["temperature"]} temperature and {params["weather"]} weather'
+    for key, value in attributes_str.items():
+        if key in params and params[key]:
+            base_template += value
 
     return base_template + '.'
 
 
 def input_modifier(string):
+    now = datetime.now()
     if params['time_context']:
-        string += f' [Current time: {datetime.now().strftime("%I:%M %p")}]'
+        string += f' [Current time: {now.strftime("%I:%M %p")}]'
     if params['date_context']:
-        string += f' [Current date: {datetime.now().strftime("%B %d, %Y")}]'
+        string += f' [Current date: {now.strftime("%B %d, %Y")}]'
     return string
 
 
