@@ -14,24 +14,23 @@ params = {
 
 def state_modifier(state):
     now = datetime.now()
-    month = now.month
-    day = now.day
 
-    if (month > 3 and month < 6) or (month == 3 and day >= 20) or (month == 6 and day < 21):
+    month = now.month
+    if month in [3, 4, 5]:
         season = 'spring'
-    elif (month > 6 and month < 9) or (month == 6 and day >= 21) or (month == 9 and day < 22):
+    elif month in [6, 7, 8]:
         season = 'summer'
-    elif (month > 9 and month < 12) or (month == 9 and day >= 22) or (month == 12 and day < 21):
+    elif month in [9, 10, 11]:
         season = 'autumn'
     else:
         season = 'winter'
 
     hour = now.hour
-    if 5 <= hour < 12:
+    if hour in range(5, 12):
         time_of_day = 'morning'
-    elif 12 <= hour < 17:
+    elif hour in range(12, 17):
         time_of_day = 'afternoon'
-    elif 17 <= hour < 21:
+    elif hour in range(17, 21):
         time_of_day = 'evening'
     else:
         time_of_day = 'night'
@@ -63,19 +62,17 @@ def state_modifier(state):
 
 
 def get_auto_context(season, time_of_day, weekday):
-    base_template = f'This conversation takes place on a {weekday} {time_of_day}'
+    base_template = f'This conversation takes place on a {weekday} {time_of_day} during the {season} season.'
 
-    attributes_str = {
-        'location': f', in {params["location"]}',
-        'season': f', during the {season} season',
-        'temperature_weather': f', with a {params["temperature"]} temperature and {params["weather"]} weather'
-    }
+    additional_sentences = []
+    if 'location' in params and params['location']:
+        additional_sentences.append(f'The location is {params["location"]}.')
+    if 'temperature' in params and params['temperature']:
+        additional_sentences.append(f'The temperature is {params["temperature"]}.')
+    if 'weather' in params and params['weather']:
+        additional_sentences.append(f'The weather is {params["weather"]}.')
 
-    for key, value in attributes_str.items():
-        if key in params and params[key]:
-            base_template += value
-
-    return base_template + '.'
+    return ' '.join([base_template] + additional_sentences)
 
 
 def input_modifier(string):
